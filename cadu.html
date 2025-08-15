@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadu - Assistente Pessoal</title>
+</head>
+<body>
+<h1>Cadu</h1>
+<input type="text" id="pergunta" placeholder="Fala ou digita aqui..." />
+<button onclick="fazerPergunta()">Perguntar</button>
+<p id="resposta"></p>
+
+<script>
+async function fazerPergunta() {
+    const pergunta = document.getElementById('pergunta').value;
+    const respostaEl = document.getElementById('resposta');
+    let resposta = "";
+
+    try {
+        // Cotação do dólar
+        if(pergunta.toLowerCase().includes("dólar")) {
+            const r = await fetch('https://api.exchangerate.host/latest?base=USD&symbols=BRL');
+            const data = await r.json();
+            resposta = `O dólar agora está R$ ${data.rates.BRL.toFixed(2)}`;
+        } 
+        // Clima (OpenWeatherMap)
+        else if(pergunta.toLowerCase().includes("clima") || pergunta.toLowerCase().includes("tempo")) {
+            const cidade = "Fortaleza"; 
+            const apiKey = "72b2ae868cb0cb3d600f0d6138e24a91"; // sua chave OpenWeatherMap
+            const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cidade},BR&appid=${apiKey}&units=metric&lang=pt_br`);
+            const data = await r.json();
+            resposta = `Em ${cidade} hoje está ${data.weather[0].description} com ${data.main.temp.toFixed(0)} graus.`;
+        } 
+        // Perguntas gerais GPT
+        else {
+            const apiKey = "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"; // sua chave OpenAI
+            const r = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [{role:"user", content: "Responda resumidamente: " + pergunta}]
+                })
+            });
+            const data = await r.json();
+            resposta = data.choices[0].message.content;
+        }
+    } catch(err) {
+        resposta = "Opa, deu algum erro. Tenta de novo!";
+        console.error(err);
+    }
+
+    // Exibir resposta
+    respostaEl.innerText = resposta;
+
+    // Falar a resposta no fone
+    const fala = new SpeechSynthesisUtterance(resposta);
+    fala.lang = 'pt-BR';
+    speechSynthesis.speak(fala);
+}
+</script>
+</body>
+</html>
