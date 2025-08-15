@@ -1,12 +1,22 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001; // Porta 3001 para evitar conflito
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(cors());
 app.use(express.json());
+
+// Servir o HTML
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "Cadu.html"));
+});
 
 // Endpoint dólar
 app.get("/dolar", async (req, res) => {
@@ -23,7 +33,7 @@ app.get("/dolar", async (req, res) => {
 app.get("/clima", async (req, res) => {
   try {
     const cidade = "Fortaleza";
-    const apiKey = process.env.OPENWEATHER_API_KEY; // colocar no Secrets
+    const apiKey = process.env.OPENWEATHER_API_KEY; // Configurar no Secrets
     const r = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${cidade},BR&appid=${apiKey}&units=metric&lang=pt_br`
     );
@@ -38,8 +48,7 @@ app.get("/clima", async (req, res) => {
 app.post("/cadu", async (req, res) => {
   try {
     const pergunta = req.body.pergunta;
-    const apiKey = process.env.OPENAI_API_KEY; // colocar no Secrets
-
+    const apiKey = process.env.OPENAI_API_KEY; // Configurar no Secrets
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -51,7 +60,6 @@ app.post("/cadu", async (req, res) => {
         messages: [{ role: "user", content: pergunta }],
       }),
     });
-
     const data = await r.json();
     res.json({ message: data.choices[0].message.content });
   } catch (err) {
@@ -59,12 +67,7 @@ app.post("/cadu", async (req, res) => {
   }
 });
 
-// Root
-app.get("/", (req, res) => {
-  res.send("Cadu backend rodando!");
-});
-
-// Mantém o servidor ativo
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Cadu backend rodando na porta ${PORT}`);
 });
