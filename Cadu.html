@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Cadu</title>
+</head>
+<body>
+<h1>Cadu</h1>
+<input type="text" id="pergunta" placeholder="Fala ou digita aqui..." />
+<button onclick="fazerPergunta()">Perguntar</button>
+<p id="resposta"></p>
+
+<script>
+async function fazerPergunta() {
+    const pergunta = document.getElementById('pergunta').value;
+    const respostaEl = document.getElementById('resposta');
+
+    const lower = pergunta.toLowerCase();
+    try {
+        let res, data;
+
+        if (lower.includes("dólar")) {
+            res = await fetch("/dolar");
+            data = await res.json();
+        } else if (lower.includes("clima") || lower.includes("tempo")) {
+            res = await fetch("/clima");
+            data = await res.json();
+        } else {
+            res = await fetch("/cadu", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ pergunta })
+            });
+            data = await res.json();
+        }
+
+        respostaEl.innerText = data.message;
+
+        const fala = new SpeechSynthesisUtterance(data.message);
+        fala.lang = 'pt-BR';
+        speechSynthesis.speak(fala);
+
+    } catch(err) {
+        respostaEl.innerText = "Opa, deu algum erro. Tenta de novo!";
+        console.error(err);
+    }
+}
+</script>
+</body>
+</html>
